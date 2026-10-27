@@ -9,6 +9,4 @@ def get_request():
     header = {'Authorization': f'Bearer {token}'}
     r = requests.get('https://api.github.com/repos/home-assistant/operating-system/pulls', headers=header)
 
-    print(r.status_code)
-    print(r.json())
-
+    return r.json()
