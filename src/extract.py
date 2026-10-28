@@ -1,26 +1,17 @@
-from datetime import date
 from abc import abstractmethod, ABC
 import requests, os
 from dotenv import load_dotenv
 
-
-class Entry:
-    ticket_id: str # PR number
-    title: str # PR title
-    author: str
-    resolve_date: date # Merge date
-    resolved: bool # CR_Passed
-    checks_passed: bool
-
 class FetcherStrategy(ABC):
 
     @abstractmethod
-    def fetch(self) -> Entry:
+    def fetch() -> list[dict[str, any]]:
         pass
 
     @abstractmethod
-    def fetch_auth(self) -> str:
+    def fetch_auth():
         pass
+
 
 class GithubFetcher(FetcherStrategy):
 
@@ -32,18 +23,41 @@ class GithubFetcher(FetcherStrategy):
         params = {'state': 'all'}
 
         try:
-            pull_requests = requests.get(f'https://api.github.com/repos/{owner}/{repo}/pulls', headers=header, params=params)
+            pull_requests = requests.get(
+                    f'https://api.github.com/repos/{owner}/{repo}/pulls'
+                    ,headers=header
+                    ,params=params
+                ).json()
         except Exception as e:
             raise e
 
-        pull_number = pull_requests.json()['number']
+        collection_set = []
 
-        pr_reviews = requests.get(f'https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}/reviews', headers=header)
+        for (index, pull_request) in enumerate(pull_requests):
 
-        pr_checks = requests.get(f'https://api.github.com/repos/{owner}/{repo}/commits/{ref}', headers=header)
+            pull_number = pull_request['number']
+            ref = pull_request['merge_commit_sha']
 
+            pr_reviews = requests.get(
+                    f'https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}/reviews'
+                    ,headers=header
+                ).json()
 
-    def fetch_auth():
+            pr_checks = requests.get(
+                    f'https://api.github.com/repos/{owner}/{repo}/commits/{ref}'
+                    ,headers=header
+                ).json()
+
+            collection_set.append({
+                    'index': index
+                    ,'pull_request': pull_request
+                    ,'pr_reviews': pr_reviews
+                    ,'pr_checks': pr_checks
+                })
+
+        return collection_set
+
+    def fetch_auth(self):
         # Fetches GH bearer PAT.
         # Ensure that there is a valid GH PAT under .env in the src/ directory structure.
         # Format: "GITHUB_TOKEN=ghp_****"
