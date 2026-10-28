@@ -4,12 +4,14 @@ import extract
 def transform_json():
     json_content = extract.get_pull_requests()
 
+    list = []
+
     # first_entry = json_content.pop()
     for entry in json_content:
-        print(entry['number'])
-        print(entry['title'])
-        print(entry['user']['login'])
-        print(entry['merged_at'])
+        pr_number = entry['number']
+        pr_title = entry['title']
+        author = entry['user']['login']
+        merge_date = entry['merged_at']
 
         try:
             reviews = extract.get_reviews(entry['number'])
