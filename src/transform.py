@@ -1,8 +1,6 @@
-from abc import abstractmethod
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import date
 import extract
-
 
 class DataEntry:
 
@@ -16,7 +14,7 @@ class DataEntry:
         self.checks_passed = checks_passed
 
     def __str__(self):
-        return f'Index: {self.index},\nPR number: {self.ticket_id}\nPR title: {self.title}\nAuthor: {self.author}\nMerge date: {self.resolve_date}\nCR passed: {self.resolved}\nChecks passed: {self.checks_passed}'
+        return f'Index: {self.index},\nTicket ID: {self.ticket_id}\nTitle: {self.title}\nAuthor: {self.author}\nResolve date: {self.resolve_date}\nResolved: {self.resolved}\nChecks passed: {self.checks_passed}'
 
 class TransformStrategy(ABC):
 
@@ -27,7 +25,6 @@ class TransformStrategy(ABC):
     @abstractmethod
     def transform_entry(self, **kwargs) -> DataEntry:
         pass
-
 
 class GithubTransformer(TransformStrategy):
 
