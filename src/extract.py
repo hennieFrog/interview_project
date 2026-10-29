@@ -2,6 +2,7 @@ from abc import abstractmethod, ABC
 import requests, os
 from dotenv import load_dotenv
 
+
 class FetcherStrategy(ABC):
 
     @abstractmethod
@@ -33,7 +34,7 @@ class GithubFetcher(FetcherStrategy):
 
         collection_set = []
 
-        for (index, pull_request) in enumerate(pull_requests):
+        for (index, pull_request) in enumerate([pull_requests.pop()]):
 
             pull_number = pull_request['number']
             ref = pull_request['merge_commit_sha']
