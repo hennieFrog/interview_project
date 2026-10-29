@@ -10,7 +10,7 @@ class TransformStrategy(ABC):
         pass
 
     @abstractmethod
-    def transform_entry(self, **kwargs) -> dict:
+    def transform_entry(self) -> dict:
         pass
 
 

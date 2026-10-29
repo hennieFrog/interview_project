@@ -1,3 +1,5 @@
+from requests.models import ConnectionError
+from sys import exit
 from abc import abstractmethod, ABC
 import requests, os
 from dotenv import load_dotenv
@@ -22,32 +24,56 @@ class GithubFetcher(FetcherStrategy):
     def fetch(self, owner: str, repo: str):
         header = {'Authorization': f'Bearer {self.token}'}
         params = {'state': 'all'}
+        collection_set = []
 
+        requests_link = f'https://api.github.com/repos/{owner}/{repo}/pulls'
         try:
             pull_requests = requests.get(
-                    f'https://api.github.com/repos/{owner}/{repo}/pulls'
+                    requests_link
                     ,headers=header
                     ,params=params
                 ).json()
-        except Exception as e:
-            raise e
+        except ConnectionError:
+            print(f'Connection error when trying to connect to {requests_link}')
+            exit(1)
+        except ConnectionRefusedError:
+            print(f'Connection refused {requests_link}')
+            exit(1)
 
-        collection_set = []
+        self.verify_connection(pull_requests)
 
-        for (index, pull_request) in enumerate([pull_requests.pop()]):
+        for (index, pull_request) in enumerate(pull_requests):
 
             pull_number = pull_request['number']
             ref = pull_request['merge_commit_sha']
 
-            pr_reviews = requests.get(
-                    f'https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}/reviews'
-                    ,headers=header
-                ).json()
+            reviews_link = f'https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}/reviews'
+            try:
+                pr_reviews = requests.get(
+                        reviews_link
+                        ,headers=header
+                    ).json()
+            except ConnectionError:
+                print(f'Connection error when trying to connect to {reviews_link}')
+                exit()
+            except ConnectionRefusedError:
+                print(f'Connection refused for {reviews_link}')
+                exit()
+            self.verify_connection(pr_reviews)
 
-            pr_checks = requests.get(
-                    f'https://api.github.com/repos/{owner}/{repo}/commits/{ref}'
-                    ,headers=header
-                ).json()
+            commits_link = f'https://api.github.com/repos/{owner}/{repo}/commits/{ref}'
+            try:
+                pr_checks = requests.get(
+                        commits_link
+                        ,headers=header
+                    ).json()
+            except ConnectionError:
+                print(f'Connection error when trying to connect to {commits_link}')
+                exit()
+            except ConnectionRefusedError:
+                print(f'Connection refused {commits_link}')
+                exit()
+            self.verify_connection(pr_checks)
 
             collection_set.append({
                     'index': index
@@ -66,6 +92,14 @@ class GithubFetcher(FetcherStrategy):
             load_dotenv()
             return os.environ['GITHUB_TOKEN']
         except Exception as e:
-            raise e
+            print('No valid token found in environment. Check your .env file or environment variables.\nEnsure you set a variable in the format \"GITHUB_TOKEN=ghp_****\".')
+            exit()
 
+    def verify_connection(self, body):
+        try:
+            if body['status'] != '200':
+                print(f'{body['status']}: {body['message']}')
+                exit(1)
+        except Exception as e:
+            pass
 
