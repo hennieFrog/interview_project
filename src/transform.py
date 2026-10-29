@@ -1,30 +1,18 @@
 from abc import ABC, abstractmethod
-from datetime import date
+from pandas import DataFrame
 import extract
 
-class DataEntry:
-
-    def __init__(self, index:int, ticket_id:str, title:str, author:str, resolve_date:date, resolved:bool, checks_passed:bool):
-        self.index = index
-        self.ticket_id = ticket_id  # PR number
-        self.title = title # PR title
-        self.author = author
-        self.resolve_date = resolve_date # Merge date
-        self.resolved = resolved # CR_Passed
-        self.checks_passed = checks_passed
-
-    def __str__(self):
-        return f'Index: {self.index},\nTicket ID: {self.ticket_id}\nTitle: {self.title}\nAuthor: {self.author}\nResolve date: {self.resolve_date}\nResolved: {self.resolved}\nChecks passed: {self.checks_passed}'
 
 class TransformStrategy(ABC):
 
     @abstractmethod
-    def transform(self):
+    def transform(self) -> DataFrame:
         pass
 
     @abstractmethod
-    def transform_entry(self, **kwargs) -> DataEntry:
+    def transform_entry(self, **kwargs) -> dict:
         pass
+
 
 class GithubTransformer(TransformStrategy):
 
@@ -34,14 +22,24 @@ class GithubTransformer(TransformStrategy):
 
     def transform(self):
         fetcher = extract.GithubFetcher()
-        collction_set = fetcher.fetch(owner=self.owner, repo=self.repo)
+        collection_set = fetcher.fetch(owner=self.owner, repo=self.repo)
 
-        data = []
-        for collection in collction_set:
+        df = DataFrame(
+                columns=[
+                    'ticket_id'
+                    ,'title'
+                    ,'author'
+                    ,'resolve_date'
+                    ,'resolved'
+                    ,'checks_passed'
+                ]
+            )
+
+        for (i, collection) in enumerate(collection_set):
             transformed_entry = self.transform_entry(collection)
-            data.append(transformed_entry)
+            df.loc[i] = transformed_entry
 
-        return data
+        return df
 
     def transform_entry(self, collection):
 
@@ -53,45 +51,17 @@ class GithubTransformer(TransformStrategy):
                 if review['state'] == 'APPROVED':
                     resolved = True 
         except TypeError as e:
-            pass
+            raise e
 
-        checks_passed = True if collection['pr_checks']['commit']['verification']['verified'] == 'True' else False
-
-        entry = DataEntry(
-                index= collection['index']
-                ,ticket_id= collection['pull_request']['number']
-                ,title= collection['pull_request']['title']
-                ,author= collection['pull_request']['user']['login']
-                ,resolve_date= collection['pull_request']['user']['login']
-                ,resolved= resolved
-                ,checks_passed= checks_passed
-            )
+        entry = {
+                'ticket_id': collection['pull_request']['number']  # PR number 
+                ,'title': collection['pull_request']['title'] # PR title
+                ,'author': collection['pull_request']['user']['login']
+                ,'resolve_date': collection['pull_request']['merged_at'] # Merge date
+                ,'resolved': resolved # CR_Passed
+                ,'checks_passed': collection['pr_checks']['commit']['verification']['verified']
+            }
 
         return entry
 
-
-# def transform_json():
-#     json_content = extract.get_pull_requests()
-#
-#     list = []
-#
-#     # first_entry = json_content.pop()
-#     for entry in json_content:
-#         pr_number = entry['number']
-#         pr_title = entry['title']
-#         author = entry['user']['login']
-#         merge_date = entry['merged_at']
-#
-#         try:
-#             reviews = extract.get_reviews(entry['number'])
-#             for review in reviews:
-#                 print(review['state'])
-#         except TypeError as e:
-#             print('No reviews in progress')
-#             continue
-#
-#         checks = extract.get_checks(entry['merge_commit_sha'])
-#         print(checks['commit']['verification']['verified'])
-#
-#         print(' ')
 
