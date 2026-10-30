@@ -11,5 +11,6 @@ if __name__ == "__main__":
 
     print(merged_df.head())
     merged_df.to_csv('out.csv', index=False)
+    print(f'Saved in \"out.csv\"')
 
 

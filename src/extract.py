@@ -4,6 +4,21 @@ from abc import abstractmethod, ABC
 import requests, os
 from dotenv import load_dotenv
 
+'''
+EXTRACT.PY
+
+This class manages all fetch scripts for the extract step in the ETL pipeline
+It uses a Strategy Pattern to allow for simple integrations with different platforms.
+Add your integration fetcher strategy as a subclass of the abstract class FetcherStrategy.
+
+It has two abstract methods that's required by the integration, fetch() and fetch_auth().
+fetch() gets all the data and stores it in a list of dictionaries that contains the raw
+extracted data. This data could be directly stored if and ELT pipline is required later on.
+
+The fetch_auth() abstract method retrieves the credentials necessary for the fetch() method.
+It can be a simple token in the .env file, or full user credentials like email and password
+from a different source.
+'''
 
 class FetcherStrategy(ABC):
 
@@ -27,6 +42,7 @@ class GithubFetcher(FetcherStrategy):
         collection_set = []
 
         requests_link = f'https://api.github.com/repos/{owner}/{repo}/pulls'
+        print(f'Fetching requests from {requests_link}...')
         try:
             pull_requests = requests.get(
                     requests_link
@@ -48,6 +64,7 @@ class GithubFetcher(FetcherStrategy):
             ref = pull_request['merge_commit_sha']
 
             reviews_link = f'https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}/reviews'
+            print(f'Fetching reviews from {reviews_link}...')
             try:
                 pr_reviews = requests.get(
                         reviews_link
@@ -62,6 +79,7 @@ class GithubFetcher(FetcherStrategy):
             self.verify_connection(pr_reviews)
 
             commits_link = f'https://api.github.com/repos/{owner}/{repo}/commits/{ref}'
+            print(f'Fetching commits from {commits_link}...')
             try:
                 pr_checks = requests.get(
                         commits_link
@@ -84,10 +102,10 @@ class GithubFetcher(FetcherStrategy):
 
         return collection_set
 
+    # Fetches GH bearer PAT.
+    # Ensure that there is a valid GH PAT under .env in the src/ directory structure.
+    # Format: "GITHUB_TOKEN=ghp_****"
     def fetch_auth(self):
-        # Fetches GH bearer PAT.
-        # Ensure that there is a valid GH PAT under .env in the src/ directory structure.
-        # Format: "GITHUB_TOKEN=ghp_****"
         try:
             load_dotenv()
             return os.environ['GITHUB_TOKEN']

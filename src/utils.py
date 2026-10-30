@@ -1,7 +1,6 @@
 from pandas import DataFrame, concat, read_csv
 
 def upsert_df(new_df: DataFrame) -> DataFrame:
-
     old_df = DataFrame()
 
     try:

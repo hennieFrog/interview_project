@@ -2,6 +2,17 @@ from abc import ABC, abstractmethod
 from pandas import DataFrame
 import extract
 
+'''
+TRANSFORM.PY
+
+This class pocesses the raw list of dictionaries into useable data as the second step in the
+ETL pipeline. This class also uses a Strategy OOP Pattern to neatly slot in a transformer for
+a different integration.
+
+There is two abstract methods: transform() and transform_entry(). transform() is the overall
+method that iterates through every entry wich calls trasnform_entry() to do the row level
+transformation which returns a dict. All the data is appended to a dataframe.
+'''
 
 class TransformStrategy(ABC):
 
@@ -35,14 +46,15 @@ class GithubTransformer(TransformStrategy):
                 ]
             )
 
+        print('Transforming data...')
+
         for (i, collection) in enumerate(collection_set):
             transformed_entry = self.transform_entry(collection)
             df.loc[i] = transformed_entry
 
         return df
 
-    def transform_entry(self, collection):
-
+    def transform_entry(self, collection) -> dict:
         reviews = collection['pr_reviews']
         resolved = False
 

@@ -25,17 +25,16 @@ Misc notes and planning for the project
 
 ### Thu:
 
-- Finish most core developement.
-- Optimise and debugging
-- Implement error handling where not yet implemented
-- Unit Tests
+- ~Finish most core developement.~
+- ~Optimise and debug~
+- ~Implement error handling where not yet implemented~
 - Implement optional approach if feasable
 
 ### Fri:
 
-- Final rounding
-- Testing
-- Final documenting where necessary
+- ~Final rounding~
+- ~Final documenting where necessary~
+- ~Testing~
 
 ---
 ## RESEARCH
@@ -70,4 +69,4 @@ https://www.youtube.com/watch?v=97V7ICVeTJc
 ### AI dynamic integrations
 
 notes:
-- If integrating with AI, programme must be written with a dynamic and OOP structure as to "slot in" any further integration.
+- If integrating with AI, programme must be written with a dynamic OOP structure as to "slot in" any further integration.
